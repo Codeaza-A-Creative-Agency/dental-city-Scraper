@@ -1,6 +1,7 @@
 import scrapy 
 from scrapy.crawler import CrawlerProcess
 import pandas as pd
+#...
 df= pd.read_csv('Dental-City-Product-urls.csv')
 links= df['Links'].tolist()
 
