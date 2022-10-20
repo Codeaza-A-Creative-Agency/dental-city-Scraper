@@ -1,11 +1,22 @@
 import scrapy 
 from scrapy.crawler import CrawlerProcess
 import pandas as pd
-#...
-df= pd.read_csv('Dental-City-Product-urls.csv')
+import re
+# df= pd.read_csv('Dental-City-Product-urls.csv')
+df=pd.read_csv('Dental-City-Product-urls.csv')
 links= df['Links'].tolist()
-
+# print(len(links))
+# print(len(cats))
 class p_links_scraper(scrapy.Spider):
+    
+    custom_settings = {
+        'DOWNLOAD_DELAY' : 0.25,
+        'RETRY_TIMES': 10,
+        # export as CSV format
+        'FEED_FORMAT' : 'csv',
+        'FEED_URI' : 'New-Dental-city-data-with-category.csv'
+    }
+     
     name= 'p_links_scraper'
     
     def start_requests(self):
@@ -16,10 +27,33 @@ class p_links_scraper(scrapy.Spider):
         manufacture=response.css('span.desktopproductname ::text').extract_first()
         baseurl='https://dentalcity.com'
         att_url =response.xpath("//div[@class='dc-product-sheet']/a/@href").extract()
-        # att_url = ''.join(baseurl+url)
+        att_url = ','.join(baseurl+url for url in att_url)
         manufacture = manufacture.split('-')[0]
         descrip =response.css('div.dc-product-detail ::text').extract()
-        descrip= ''.join(str(stri) for stri in descrip)
+        category= response.xpath("(//meta[@itemprop='category']/@content)[1]").extract_first()
+        try:
+            pkgqty= response.xpath("(//meta[@itemprop='name']/@content)[1]").extract_first()
+            pkg =pkgqty.split('/')[1]
+            qty = pkgqty.split('/')[0]
+            for word in qty:
+                if word.isdigit():
+                    qty=word
+        except:
+            pass
+            try:
+                descrip= ''.join(str(stri) for stri in descrip)
+            except:
+                descrip='Null'
+            try:
+                qty = re.search('(.+)/(\D*)',descrip).group(1)
+                for word in qty.split():
+                    if word.isdigit():
+                        qty=word
+                    
+                pkg= re.search('(.+)/(\D*)',descrip).group(2)
+            except:
+                qty='Null'
+                pkg='Null'
         yield{
             "Seller Platform": "Dental City",
             "Seller SKU":response.xpath("//meta[@itemprop='sku']/@content").extract_first(),
@@ -27,12 +61,12 @@ class p_links_scraper(scrapy.Spider):
             "Manufacture Code":response.xpath("//meta[@itemprop='mpn']/@content").extract_first(),
             "Product Title":response.css('span.desktopproductname ::text').extract_first(),
             "Description":descrip,
-            "Packaging":descrip,
-            "Qty":descrip,
-            "Categories": response.xpath("(//ul[@class='clearfix']/li/a/span/text())[2]").extract_first(),
+            "Packaging":pkg,
+            "Qty":qty,
+            "Categories":category,
+                # response.xpath("(//ul[@class='clearfix']/li/a/span/text())[2]").extract_first(),
             "Product Page URL":response.url,
             "Attachment URL":att_url,
-                # response.xpath("//a[@class='dc-product-detail-link']/@href").extract()
             'Image URL':response.xpath("//img[@itemprop='image']/@src").extract()
             
             
