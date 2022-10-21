@@ -2,12 +2,10 @@ import scrapy
 from scrapy.crawler import CrawlerProcess
 import pandas as pd
 import re
-# df= pd.read_csv('Dental-City-Product-urls.csv')
 df=pd.read_csv('Dental-City-Product-urls.csv')
 links= df['Links'].tolist()
-# print(len(links))
-# print(len(cats))
-class p_links_scraper(scrapy.Spider):
+
+class dental_city_scraper(scrapy.Spider):
     
     custom_settings = {
         'DOWNLOAD_DELAY' : 0.25,
@@ -17,7 +15,7 @@ class p_links_scraper(scrapy.Spider):
         'FEED_URI' : 'New-Dental-city-data-with-category.csv'
     }
      
-    name= 'p_links_scraper'
+    name= 'scraper'
     
     def start_requests(self):
         for url in links:
@@ -46,10 +44,6 @@ class p_links_scraper(scrapy.Spider):
                 descrip='Null'
             try:
                 qty = re.search('(.+)/(\D*)',descrip).group(1)
-                for word in qty.split():
-                    if word.isdigit():
-                        qty=word
-                    
                 pkg= re.search('(.+)/(\D*)',descrip).group(2)
             except:
                 qty='Null'
@@ -64,7 +58,6 @@ class p_links_scraper(scrapy.Spider):
             "Packaging":pkg,
             "Qty":qty,
             "Categories":category,
-                # response.xpath("(//ul[@class='clearfix']/li/a/span/text())[2]").extract_first(),
             "Product Page URL":response.url,
             "Attachment URL":att_url,
             'Image URL':response.xpath("//img[@itemprop='image']/@src").extract()
@@ -72,7 +65,6 @@ class p_links_scraper(scrapy.Spider):
             
         }
 
-        # (//select[@id='skulist']/option/text())[2]
 process = CrawlerProcess()
-process.crawl(p_links_scraper)
+process.crawl(dental_city_scraper)
 process.start()
