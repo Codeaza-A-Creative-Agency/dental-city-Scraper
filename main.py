@@ -27,19 +27,21 @@ class dental_city_scraper(scrapy.Spider):
         sku=response.url.split('/')[4]
         url = f'https://www.dentalcity.com/Widgets-product/gethtml_skulist/{sku}/html_options3/false///'
         
-        yield scrapy.Request(url=url, callback=self.parse_skuIDs, meta={"sku":sku})
+        yield scrapy.Request(url=url, callback=self.parse_skuIDs, meta={"sku":sku, "URL":response.url})
       
     def parse_skuIDs(self,response):
-        variant_id = response.xpath('//select[@id="skulist"]/option/@id').extract()
+        variant_id = response.xpath('//select[@id="skulist"]/option/@value').extract()
         
         for v_id in variant_id:
-            url=f'https://www.dentalcity.com/widgets-product/gethtml_filtered_apparelsku/{response.meta.get("sku")}/SkuId%24%{v_id}%24%24true%24%24v/900X380/html_consumer-electronics1sku/param5/param6'
-            yield scrapy.Request(url=url, callback=self.parse_data, meta={"Variant ID":v_id, "SKU":response.meta.get("sku")})
+            url=f'https://www.dentalcity.com/widgets-product/gethtml_filtered_apparelsku/{response.meta.get("sku")}/SkuId%24%24{v_id}%24%24true%24%24v/900X380/html_consumer-electronics1sku/param5/param6'
+            yield scrapy.Request(url=url, callback=self.parse_data, meta={"Variant ID":v_id, "SKU":response.meta.get("sku"),"URL":response.meta.get("URL")})
     def parse_data(self,response):
         yield{
             "Constructed URL":response.url,
             "Variant ID":response.meta.get("Variant ID"),
             "SKU":response.meta.get("SKU"),
+            "Product URL":response.meta.get("URL")
+            
         }
          
         
