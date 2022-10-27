@@ -53,7 +53,7 @@ class dental_city_scraper(scrapy.Spider):
             "Seller SKU":response.xpath("//meta[@itemprop='sku']/@content").extract_first(),
             "Manfacture":manufacture,
             "Manufacture Code":response.xpath("//meta[@itemprop='mpn']/@content").extract_first(),
-            "Product Title":response.css('span.desktopproductname ::text').extract_first(),
+            "Product Title":response.xpath("//meta[@itemprop='name']/@content").extract_first(),
             "Description":descrip,
             "Packaging":pkg,
             "Qty":qty,

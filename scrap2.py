@@ -5,7 +5,7 @@ import re
 df=pd.read_csv('Dental-City-Product-URLs.csv')
 links= df['Product URL'].tolist()
 print(len(links))
-links = links[:100]
+links = links[:150]
 class dental_city_scraper(scrapy.Spider):
     
     custom_settings = {
@@ -13,7 +13,7 @@ class dental_city_scraper(scrapy.Spider):
         'RETRY_TIMES': 10,
         # export as CSV format
         'FEED_FORMAT' : 'csv',
-        'FEED_URI' : 'sample.csv'
+        'FEED_URI' : 'testing2.csv'
     }
      
     name= 'scraper'
@@ -39,8 +39,8 @@ class dental_city_scraper(scrapy.Spider):
                 qty = re.search('(.+)/(\D*)',descrip).group(1)
                 pkg= re.search('(.+)/(\D*)',descrip).group(2)
             except:
-                qty = re.search('(.+)/(\D*)',name).group(1)
-                pkg= re.search('(.+)/(\D*)',name).group(2)
+                qty = ''
+                pkg= ''
             yield{
                 "Seller Platform": "Dental City",
                 "Seller SKU":sku,
