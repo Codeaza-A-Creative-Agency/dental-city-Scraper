@@ -3,7 +3,7 @@ from scrapy.crawler import CrawlerProcess
 import pandas as pd
 import re
 df=pd.read_csv('Dental-City-Product-urls.csv')
-links= df['Links'].tolist()
+links= df['Product URL'].tolist()
 
 class dental_city_scraper(scrapy.Spider):
     
@@ -12,7 +12,11 @@ class dental_city_scraper(scrapy.Spider):
         'RETRY_TIMES': 10,
         # export as CSV format
         'FEED_FORMAT' : 'csv',
-        'FEED_URI' : 'New-Dental-city-data-with-category.csv'
+        'FEED_URI' : 'New-Dental-city-data-with-category.csv',
+    #     "ROTATING_PROXY_LIST" : ["108.59.14.208:13040", "108.59.14.203:13040"],
+    #     "DOWNLOADER_MIDDLEWARES" : {
+    #             "rotating_proxies.middlewares.RotatingProxyMiddleware" : 610,
+    #             "rotating_proxies.middlewares.BanDetectionMiddleware" : 620}
     }
      
     name= 'scraper'
@@ -39,15 +43,15 @@ class dental_city_scraper(scrapy.Spider):
         except:
             pass
             try:
-                descrip= ''.join(str(stri) for stri in descrip)
+                descrip= ''.join(descrip)
             except:
-                descrip='Null'
+                descrip=None
             try:
                 qty = re.search('(.+)/(\D*)',descrip).group(1)
                 pkg= re.search('(.+)/(\D*)',descrip).group(2)
             except:
-                qty='Null'
-                pkg='Null'
+                qty=None
+                pkg=None
         yield{
             "Seller Platform": "Dental City",
             "Seller SKU":response.xpath("//meta[@itemprop='sku']/@content").extract_first(),

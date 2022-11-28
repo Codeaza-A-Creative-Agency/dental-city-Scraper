@@ -6,7 +6,7 @@ import pandas as pd
 import re
 df=pd.read_csv('Dental-City-Product-URLs.csv')
 links= df['Product URL'].tolist()
-links=links[:150]
+# links=links[:500]
 
 class dental_city_scraper(scrapy.Spider):
     
@@ -15,11 +15,11 @@ class dental_city_scraper(scrapy.Spider):
         'RETRY_TIMES': 10,
         # export as CSV format
         'FEED_FORMAT' : 'csv',
-        # 'FEED_URI' : 'testing.csv'
-    #     "ROTATING_PROXY_LIST" : ["108.59.14.208:13040", "108.59.14.203:13040"],
-    #             "DOWNLOADER_MIDDLEWARES" : {
-    #             "rotating_proxies.middlewares.RotatingProxyMiddleware" : 610,
-    #             "rotating_proxies.middlewares.BanDetectionMiddleware" : 620}
+        'FEED_URI' : 'dental-city-sample.csv'
+        # "ROTATING_PROXY_LIST" : ["108.59.14.208:13040", "108.59.14.203:13040"],
+        #         "DOWNLOADER_MIDDLEWARES" : {
+        #         "rotating_proxies.middlewares.RotatingProxyMiddleware" : 610,
+        #         "rotating_proxies.middlewares.BanDetectionMiddleware" : 620}
     }
      
     name= 'scraper'
@@ -33,6 +33,9 @@ class dental_city_scraper(scrapy.Spider):
         names= response.xpath('//div[@class="schema"]/meta[@itemprop="name"]/@content').extract()
         skus = response.xpath('//meta[@itemprop="sku"]/@content').extract()
         description =response.xpath('//meta[@itemprop="description"]/@content').extract()
+        description=''.join(description)
+        clean = lambda dirty: dirty.replace('\n', '').replace('\t', '').replace('\r', '').replace('\xa0', '').replace('\u200b', '').replace('\u200c', '').strip()
+        description= clean(description)
         mpn =response.xpath('//meta[@itemprop="mpn"]/@content').extract()
         category=response.xpath('//meta[@itemprop="category"]/@content').extract()
         prod= zip(names,skus,mpn,category)
@@ -97,9 +100,7 @@ class dental_city_scraper(scrapy.Spider):
             "Subcategories":response.meta.get('sub'),
             "Product URL":response.meta.get("URL"),
             "Attachment":response.meta.get("AURL"),
-            "Image URL": images,
-            "p_sku":response.meta.get("SKU")
-            
+            "Image URL": images,            
         }
 
         
