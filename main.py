@@ -15,7 +15,7 @@ class dental_city_scraper(scrapy.Spider):
         'RETRY_TIMES': 10,
         # export as CSV format
         'FEED_FORMAT' : 'csv',
-        'FEED_URI' : 'dental-city-sample.csv'
+        'FEED_URI' : 'dental-city-DATA.csv'
         # "ROTATING_PROXY_LIST" : ["108.59.14.208:13040", "108.59.14.203:13040"],
         #         "DOWNLOADER_MIDDLEWARES" : {
         #         "rotating_proxies.middlewares.RotatingProxyMiddleware" : 610,
@@ -34,8 +34,7 @@ class dental_city_scraper(scrapy.Spider):
         skus = response.xpath('//meta[@itemprop="sku"]/@content').extract()
         description =response.xpath('//meta[@itemprop="description"]/@content').extract()
         description=''.join(description)
-        clean = lambda dirty: dirty.replace('\n', '').replace('\t', '').replace('\r', '').replace('\xa0', '').replace('\u200b', '').replace('\u200c', '').strip()
-        description= clean(description)
+        description = re.sub(r"\s+"," ",description)
         mpn =response.xpath('//meta[@itemprop="mpn"]/@content').extract()
         category=response.xpath('//meta[@itemprop="category"]/@content').extract()
         prod= zip(names,skus,mpn,category)
