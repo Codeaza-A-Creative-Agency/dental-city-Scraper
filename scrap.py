@@ -2,8 +2,6 @@ import scrapy
 from scrapy.crawler import CrawlerProcess
 import pandas as pd
 import re
-df=pd.read_csv('Dental-City-Product-urls.csv')
-links= df['Product URL'].tolist()
 
 class dental_city_scraper(scrapy.Spider):
     
