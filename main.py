@@ -1,12 +1,7 @@
-import requests
-from bs4 import BeautifulSoup
+from scrapy.http import FormRequest
 import scrapy 
 from scrapy.crawler import CrawlerProcess
-import pandas as pd
 import re
-df=pd.read_csv('Dental-City-Product-URLs.csv')
-links= df['Product URL'].tolist()
-# links=links[:500]
 
 class dental_city_scraper(scrapy.Spider):
     
@@ -15,7 +10,7 @@ class dental_city_scraper(scrapy.Spider):
         'RETRY_TIMES': 10,
         # export as CSV format
         'FEED_FORMAT' : 'csv',
-        'FEED_URI' : 'dental-city-DATA.csv'
+        'FEED_URI' : 'dental-city-data.csv'
         # "ROTATING_PROXY_LIST" : ["108.59.14.208:13040", "108.59.14.203:13040"],
         #         "DOWNLOADER_MIDDLEWARES" : {
         #         "rotating_proxies.middlewares.RotatingProxyMiddleware" : 610,
@@ -23,11 +18,49 @@ class dental_city_scraper(scrapy.Spider):
     }
      
     name= 'scraper'
-    def start_requests(self):
-        for url in links:
-            
-            yield scrapy.Request(url=url, callback=self.parse )
+    start_urls =['https://www.dentalcity.com/category/2/shop-category']
     def parse(self,response):
+        links =response.css("li.categoriesdesc>a::attr(href)").getall()
+
+        
+        for link in links:
+            # print(link.split("/")[4])
+            data = {
+            'param1': str(link.split("/")[4]),
+            'param2': 'html_subcategorylist',
+            'param3': '150X177',
+            'param6': '',
+            'param7': '?custid=&amp;custclsid=2',
+        }
+            # data = json.dumps(data)
+            url = "https://www.dentalcity.com/widgets-category/gethtml_subcategoryproductlist"
+            yield FormRequest(url,formdata=data, callback=self.parse_product_page)
+            # yield scrapy.Request(url=url, method='POST',body=data,headers=headers,callback=self.parse_product_page)
+    def parse_product_page(self,response):
+        # print("Response",response.text)
+        links = response.css(".category-name a::attr(href)").getall()
+        for link in links:
+            yield scrapy.Request(url=link, callback=self.parse_allproduct_page)
+    def parse_allproduct_page(self,response):
+        data = {
+            'source': 'NarrowSrchData',
+            'filter': response.url.split('/')[4],
+            'hdnCategoryId': response.url.split('/')[4],
+            'hdnCurrentProductIds': '',
+            'hdnFilter': response.url.split('/')[4],
+            'hdnSortType': 'SELLERRECOMMENDATION',
+            'hdnProdPerPage': '31000'
+}
+        url = 'https://www.dentalcity.com/widgets-category/gethtml_productlist/1292/html_productlist/300X210'
+        yield FormRequest(url,formdata=data, callback=self.parse_p_links)
+    def parse_p_links(self,response):
+        links = response.css("li.prodimage>a::attr(href)").extract()
+        
+        
+        for link in links:
+            yield scrapy.Request(url=link, callback=self.parse_product)     
+       
+    def parse_product(self,response):
         Seller="Dental City"
         
         names= response.xpath('//div[@class="schema"]/meta[@itemprop="name"]/@content').extract()
@@ -39,6 +72,7 @@ class dental_city_scraper(scrapy.Spider):
         category=response.xpath('//meta[@itemprop="category"]/@content').extract()
         prod= zip(names,skus,mpn,category)
         att_url = response.xpath("//div[@class='dc-product-sheet']/a/@href").extract()
+        att_url = ["https://www.dentalcity.com"+url for url in att_url]
         mfg_name= response.xpath('//meta[@property="og:title"]/@content').extract_first().split('-')[0]
         for name,sku,mpn,category in prod:
             cat = category.split('/')[0]
@@ -65,7 +99,6 @@ class dental_city_scraper(scrapy.Spider):
        
         
         variant_id = response.xpath('//select[@id="skulist"]/option/@value').extract()
-        first= response.meta.get("URL")
         for v_id in variant_id:
             url=f'https://www.dentalcity.com/widgets-product/gethtml_filtered_apparelsku/{response.meta.get("sku")}/SkuId%24%24{v_id}%24%24true%24%24v/900X380/html_consumer-electronics1sku/param5/param6'
             yield scrapy.Request(url=url, callback=self.parse_data, meta={"Variant ID":v_id, "SKU":response.meta.get("sku"),
